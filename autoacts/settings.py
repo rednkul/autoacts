@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     # Custom apps
     'users.apps.UsersConfig',
     'acts.apps.ActsConfig',
+    'file_formation.apps.FileFormationConfig',
     # Standard apps
 
     'django.contrib.admin',
