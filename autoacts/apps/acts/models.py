@@ -43,7 +43,7 @@ class Act(models.Model):
     act_type = models.ForeignKey(Type, verbose_name='Тип акта', on_delete=models.SET_NULL, null=True)
     number = models.CharField('Номер акта', max_length=50)
     materials = models.ManyToManyField(Material, verbose_name='Материалы', related_name='materials', blank=True)
-    works = models.CharField('Проведенные работы', max_length=500)
+    works = models.CharField('Проведенные работы', max_length=1000)
     order_number = models.PositiveSmallIntegerField('Порядковый номер акта в проекте')
     project = models.ForeignKey(Project, verbose_name='Проект', on_delete=models.CASCADE, related_name='acts', null=True)
     date_start = models.CharField('Дата начала работ', max_length=50, blank=True)

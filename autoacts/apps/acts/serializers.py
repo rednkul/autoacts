@@ -31,9 +31,6 @@ class Base64FileField(serializers.FileField):
                 # Break out the header from the base64 content
                 header, data = data.split(';base64,')
 
-                print(header)
-                print(guess_extension('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'))
-
             # Try to decode the file. Return validation error if it fails.
             try:
                 decoded_file = base64.b64decode(data)
@@ -44,7 +41,7 @@ class Base64FileField(serializers.FileField):
             file_name = str(uuid.uuid4())[:12] # 12 characters are more than enough.
             file_extension = guess_extension(header[5:])
             complete_file_name = "%s%s" % (file_name, file_extension,)
-            print(complete_file_name)
+
             data = ContentFile(decoded_file, name=complete_file_name)
 
 
