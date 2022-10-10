@@ -48,6 +48,9 @@ class Act(models.Model):
     project = models.ForeignKey(Project, verbose_name='Проект', on_delete=models.CASCADE, related_name='acts', null=True)
     date_start = models.CharField('Дата начала работ', max_length=50, blank=True)
     date_end = models.CharField('Дата конца работ', max_length=50, blank=True)
+    number_of_instances = models.PositiveSmallIntegerField('Количество экземпляров акта', default=1)
+    extra_info = models.CharField('Дополнительные сведения', max_length=500)
+
 
     def __str__(self):
         return f'Акт №{self.order_number} {self.act_type}'

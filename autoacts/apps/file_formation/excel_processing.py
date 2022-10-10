@@ -6,6 +6,7 @@ import datetime
 
 from django.conf import settings
 
+
 # Порядок работы функций:
 # 1. create_acts_files
 # 2. make_dir
@@ -14,9 +15,9 @@ from django.conf import settings
 # 5. get_act_name
 # 6. excel_processing
 # Список клеток, которые нужно разъединить:
-    # works;
-    # materials
-    # даты начала-конца
+# works;
+# materials
+# даты начала-конца
 
 
 def create_acts_files(project):
@@ -65,73 +66,82 @@ def excel_processing(act, temp_file):
     act_date_cell = sheet.cell(row=number_cell.row, column=number_cell.column + 5)
     act_date_cell.value = act.date_end
 
-    # По строке номера получаю строку работ
-    works_cell_coordinate = find_cell_coordinate_by_value(
-                                                            sheet,
-                                                            '1. К освидетельствованию предъявлены следующие работы',
-                                                            start_row=number_cell.row,
-    )
-    works_cell = sheet[f'{works_cell_coordinate}']
-    # Поле works делю на отдельные строки с фиксированной длинной и получаю список строк
-    works_string_list = prepare_string_list(act.works)
+    # Работы
+    works_cell_row = insert_field_and_return_row_number(sheet, string=act.works, start_row=act_date_cell.row, field=1)
 
-    # Вставляю новые строки в зависимости от длины списка строк
-    insert_rows(sheet, works_cell.row + 1, len(works_string_list))
-    insert_string_list(sheet, works_cell.row, works_string_list)
-
-    materials_cells_coordinate = find_cell_coordinate_by_value(
-                                                            sheet,
-                                                            '3. При выполнении работ применены',
-                                                            start_row=works_cell.row,
-    )
-    materials_cells =  sheet[f'{materials_cells_coordinate}']
+    # Материалы
     materials_string = ', '.join([name for name in act.materials.all().values_list('name', flat=True)])
-    materials_string_list = prepare_string_list(materials_string)
-    insert_rows(sheet, materials_cells.row + 1, len(materials_string_list))
-    insert_string_list(sheet, materials_cells.row, materials_string_list)
+    materials_cell_row = insert_field_and_return_row_number(sheet, materials_string, start_row=works_cell_row, field=3)
 
+    # Даты начала - конца
     dates_cell_coordinate = find_cell_coordinate_by_value(
         sheet,
         '5.  Даты:',
-        start_row=materials_cells.row,
+        start_row=materials_cell_row,
 
     )
     dates_cell = sheet[f'{dates_cell_coordinate}']
-    print(dates_cell_coordinate)
+
     date_start_cell = sheet.cell(dates_cell.row, dates_cell.column)
-    print(dates_cell.column)
-    print(dates_cell.column + 3)
+
     date_start_cell.value = act.date_start
     date_end_cell = sheet.cell(date_start_cell.row + 1, date_start_cell.column)
     date_end_cell.value = act.date_end
 
-    if act.project.acts.filter(order_number=act.order_number+1).exists():
-        next_works = act.project.acts.get(order_number=act.order_number+1).works
-        next_works_cell_coordinate = find_cell_coordinate_by_value(
-                                                            sheet,
-                                                            '7. Разрешается  производство   последующих  работ  по',
-                                                            start_row=date_end_cell.row,
-        )
-        next_works_cell = sheet[f'{next_works_cell_coordinate}']
-        next_works_string_list = prepare_string_list(next_works)
+    # Следующие работы
+    if act.project.acts.filter(order_number=act.order_number + 1).exists():
+        next_works = act.project.acts.get(order_number=act.order_number + 1).works
+        next_works_cell_row = insert_field_and_return_row_number(sheet, string=next_works, start_row=dates_cell.row,
+                                                                 field=7)
 
-        # Вставляю новые строки в зависимости от длины списка строк
-        insert_rows(sheet, next_works_cell.row + 1, len(next_works_string_list))
-        insert_string_list(sheet, next_works_cell.row, next_works_string_list)
+    # Количество экземпляров акта
+    number_of_instances_cell_coordinate = find_cell_coordinate_by_value(
+        sheet,
+        'Количество экземпляров акта, шт. :',
+        start_row=date_end_cell.row,
+    )
 
+    number_of_instances_cell = sheet[f'{number_of_instances_cell_coordinate}']
+    number_of_instances_cell.value = act.number_of_instances
 
-    #excel_file.save(get_act_name(act))
-    #excel_file = openpyxl.load_workbook(get_act_name(act))
-    #sheet = excel_file["Лист 1"]
-    #works_cell = find_works_cell(number_cell.row, sheet)
-    #prepare_cells(sheet, works_cell.row + 1, works_cell.row + len(works_string_list) - 1)
-
-
-
-
-
+    # excel_file.save(get_act_name(act))
+    # excel_file = openpyxl.load_workbook(get_act_name(act))
+    # sheet = excel_file["Лист 1"]
+    # works_cell = find_works_cell(number_cell.row, sheet)
+    # prepare_cells(sheet, works_cell.row + 1, works_cell.row + len(works_string_list) - 1)
 
     excel_file.save(get_act_name(act))
+
+
+def insert_field_and_return_row_number(sheet, string: str, start_row: int, field: int, row_range=100):
+    """
+        Функция принимает лист, вставляемую строку, начальную строку листа и поле( работы, материалы,
+        следующие работы, приложения). Возвращает номер найденной строки, который понадобится для поиска
+        следующей опорной строки
+    """
+
+    if field == 1:
+        lookup_string = '1. К освидетельствованию предъявлены следующие работы'
+    elif field == 3:
+        lookup_string = '3. При выполнении работ применены'
+    elif field == 7:
+        lookup_string = '7. Разрешается  производство   последующих  работ  по'
+    # По строке номера получаю строку работ
+    cell_coordinate = find_cell_coordinate_by_value(
+        sheet,
+        lookup_string,
+        start_row=start_row,
+        row_range=row_range,
+    )
+    cell = sheet[f'{cell_coordinate}']
+    # Поле works делю на отдельные строки с фиксированной длинной и получаю список строк
+    string_list = prepare_string_list(string)
+
+    # Вставляю новые строки в зависимости от длины списка строк
+    insert_rows(sheet, cell.row + 1, len(string_list))
+    insert_string_list(sheet, cell.row, string_list)
+    return cell.row
+
 
 def prepare_cells(sheet, start_row, end_row):
     for row in range(start_row, end_row):
@@ -145,6 +155,7 @@ def prepare_cells(sheet, start_row, end_row):
 
         sheet.row_dimensions[row].height = 15.75
 
+
 def insert_rows(sheet, row, number):
     if number > 1:
         for i in range(number - 1):
@@ -156,23 +167,20 @@ def insert_string_list(sheet, start_row, string_list):
     list_len = len(string_list)
     if list_len > 1:
         for i, row in enumerate(range(start_row + 1, start_row + len(string_list))):
-
             sheet[f'A{row}'] = string_list[i + 1]
-
 
 
 def find_act_number_cell(sheet):
     for row in list(sheet.rows)[:300]:
 
         if row[0].value == 'Акт':
-
             return sheet.cell(row=row[0].row + 2, column=2).coordinate
 
     else:
         raise NotFoundReferencedWord('Акт')
 
 
-def find_cell_coordinate_by_value(sheet, value,  column=0, start_row=1, row_range=100,):
+def find_cell_coordinate_by_value(sheet, value, column=0, start_row=1, row_range=100, ):
     """
     Принимает лист файла эксельБ значение искомой ячейки, ее колонку, и диапазон строк.
     Возвращает координаты искомой ячейки. Если значение не найдено, поднимает исключение.
@@ -183,13 +191,13 @@ def find_cell_coordinate_by_value(sheet, value,  column=0, start_row=1, row_rang
     else:
         raise NotFoundReferencedWord(f'{value}')
 
+
 # def find_works_cell(start_row, sheet):
 #     for row in list(sheet.rows)[start_row: start_row + 100]:
 #         if row[0].value == '1. К освидетельствованию предъявлены следующие работы':
 #             return sheet.cell(row=row[0].row, column=7)
 #     else:
 #         raise NotFoundReferencedWord('Работы')
-
 
 
 def prepare_string_list(string):
@@ -199,16 +207,12 @@ def prepare_string_list(string):
         каждая из которых имеет длину ячейки, в которую она будет помещена.
     """
 
-
-
     string_list = [string[:50]]
     if len(string) > 50:
         for i in range(len(string[50:]) // 95 + 1):
             string_list.append(string[50 + 95 * i:50 + 95 * (i + 1)])
 
     return string_list
-
-
 
 
 class NotFoundReferencedWord(Exception):
