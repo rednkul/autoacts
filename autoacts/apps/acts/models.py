@@ -38,6 +38,13 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
+class Addition(models.Model):
+    name = models.CharField('Приложение', max_length=50, blank=True)
+    file = models.FileField('Файл приложения', upload_to='files/additions/', default=None)
+
+    @property
+    def filename(self):
+        return os.path.basename(self.file.name)
 
 class Act(models.Model):
     act_type = models.ForeignKey(Type, verbose_name='Тип акта', on_delete=models.SET_NULL, null=True)
@@ -49,7 +56,8 @@ class Act(models.Model):
     date_start = models.CharField('Дата начала работ', max_length=50, blank=True)
     date_end = models.CharField('Дата конца работ', max_length=50, blank=True)
     number_of_instances = models.PositiveSmallIntegerField('Количество экземпляров акта', default=1)
-    extra_info = models.CharField('Дополнительные сведения', max_length=500)
+    extra_info = models.CharField('Дополнительные сведения', max_length=500, blank=True)
+    additions = models.ManyToManyField(Addition, verbose_name='Приложения', related_name='additions', blank=True)
 
 
     def __str__(self):

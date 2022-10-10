@@ -126,6 +126,8 @@ def insert_field_and_return_row_number(sheet, string: str, start_row: int, field
         lookup_string = '3. При выполнении работ применены'
     elif field == 7:
         lookup_string = '7. Разрешается  производство   последующих  работ  по'
+    elif field == 8:
+        lookup_string = 'Приложения:'
     # По строке номера получаю строку работ
     cell_coordinate = find_cell_coordinate_by_value(
         sheet,
