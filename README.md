@@ -1,0 +1,3 @@
+!! IN PROGRESS !!
+
+Application for automatic creating formation of executive acts of a construction company. DRF + React(in future)...
