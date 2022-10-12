@@ -46,6 +46,9 @@ class Addition(models.Model):
     def filename(self):
         return os.path.basename(self.file.name)
 
+    def __str__(self):
+        return self.name
+
 class Act(models.Model):
     act_type = models.ForeignKey(Type, verbose_name='Тип акта', on_delete=models.SET_NULL, null=True)
     number = models.CharField('Номер акта', max_length=50)

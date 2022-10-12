@@ -1,5 +1,7 @@
 import sys, os, shutil
 import openpyxl
+import PyPDF2
+
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from openpyxl.cell.cell import MergedCell
 import datetime
@@ -103,6 +105,9 @@ def excel_processing(act, temp_file):
 
     number_of_instances_cell = sheet[f'{number_of_instances_cell_coordinate}']
     number_of_instances_cell.value = act.number_of_instances
+
+    additions_string = materials_string + '; ' + '; '.join([name for name in act.additions.all().values_list('name', flat=True)])
+    additions_cell_row = insert_field_and_return_row_number(sheet, additions_string, start_row=number_of_instances_cell.row, field=8)
 
     # excel_file.save(get_act_name(act))
     # excel_file = openpyxl.load_workbook(get_act_name(act))
@@ -226,3 +231,4 @@ class NotFoundReferencedWord(Exception):
 
     def __str__(self):
         return self.message
+
